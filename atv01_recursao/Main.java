@@ -5,7 +5,7 @@ public class Main {
     public static void main(String[] args) {
 
         SwingUtilities.invokeLater(() -> {
-            SudokuGUI janela = new SudokuGUI();
+            TelaInicial janela = new TelaInicial();
             janela.setVisible(true);
         });
     }

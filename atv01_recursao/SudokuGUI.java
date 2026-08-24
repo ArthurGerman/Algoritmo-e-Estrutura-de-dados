@@ -45,14 +45,17 @@ public class SudokuGUI extends JFrame {
         JButton carregar = new JButton("Carregar exemplo");
         JButton resolver = new JButton("Resolver");
         JButton limpar = new JButton("Limpar");
+        JButton novoJogo = new JButton("Novo jogo");
 
         carregar.addActionListener(e -> carregarExemplo());
         resolver.addActionListener(e -> resolverSudoku());
         limpar.addActionListener(e -> limparTabuleiro());
+        novoJogo.addActionListener(e -> carregarNovoJogo());
 
         painelBotoes.add(carregar);
         painelBotoes.add(resolver);
         painelBotoes.add(limpar);
+        painelBotoes.add(novoJogo);
 
         add(painelTabuleiro, BorderLayout.CENTER);
         add(painelBotoes, BorderLayout.SOUTH);
@@ -92,13 +95,15 @@ public class SudokuGUI extends JFrame {
         int[][] tabuleiro = lerTabuleiro();
 
         if (tabuleiro == null) {
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Digite apenas números de 1 a 9.",
-                    "Erro",
-                    JOptionPane.ERROR_MESSAGE
-            );
+            JOptionPane.showMessageDialog(this,
+                    "Digite apenas números de 1 a 9.", "Erro", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
 
+        if (!SudokuSolver.valido(tabuleiro)) {
+            JOptionPane.showMessageDialog(this,
+                    "O tabuleiro contém números repetidos na mesma linha, coluna ou bloco.",
+                    "Tabuleiro inválido", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
@@ -174,10 +179,14 @@ public class SudokuGUI extends JFrame {
 
         for (int linha = 0; linha < 9; linha++) {
             for (int coluna = 0; coluna < 9; coluna++) {
-
-                campos[linha][coluna]
-                        .setText(String.valueOf(tabuleiro[linha][coluna]));
+                int valor = tabuleiro[linha][coluna];
+                campos[linha][coluna].setText(valor == 0 ? "" : String.valueOf(valor));
             }
         }
+    }
+
+    private void carregarNovoJogo() {
+        int[][] jogo = new SudokuGenerator().gerar(32); // ~32 células visíveis
+        mostrarTabuleiro(jogo);
     }
 }
