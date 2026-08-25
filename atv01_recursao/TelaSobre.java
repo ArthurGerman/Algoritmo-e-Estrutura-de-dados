@@ -36,7 +36,7 @@ public class TelaSobre extends JFrame {
         add(painelTopo, BorderLayout.NORTH);
 
         JTextArea textoSobre = new JTextArea();
-        textoSobre.setText("Texto sobre o aplicativo.\n\n(Substitua este conteúdo pelo texto definitivo.)");
+        textoSobre.setText("Este projeto tem como objetivo exercitar os conhecimentos sobre a estrutura de dados Recursão através da resolução de um Sudoku. Este projeto foi desenvolvido por Arthur Germano e Lucas Bezerra.");
         textoSobre.setLineWrap(true);
         textoSobre.setWrapStyleWord(true);
         textoSobre.setEditable(false);

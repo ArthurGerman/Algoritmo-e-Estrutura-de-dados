@@ -8,7 +8,9 @@ public class SudokuGUI extends JFrame {
     private final JComboBox<String> seletorDificuldade;
 
     private static final Color COR_FUNDO = new Color(112, 42, 84);
-    private static final Color COR_CELULA = new Color(255, 248, 251);
+    private static final Color COR_CELULA_FIXA = new Color(255, 248, 251); // Fundo para dicas fixas
+    private static final Color COR_CELULA_EDITAVEL = new Color(255, 255, 255); // Fundo para preenchimento do usuario
+    private static final Color COR_TEXTO_EDITAVEL = new Color(198, 60, 112); // Cor do texto digitado pelo usuario
     private static final Color COR_GRADE = new Color(112, 42, 84);
 
     public SudokuGUI() {
@@ -61,8 +63,6 @@ public class SudokuGUI extends JFrame {
                 JTextField campo = new JTextField();
                 campo.setHorizontalAlignment(JTextField.CENTER);
                 campo.setFont(new Font("Arial", Font.BOLD, 20));
-                campo.setForeground(COR_FUNDO);
-                campo.setBackground(COR_CELULA);
                 campo.setCaretColor(COR_FUNDO);
                 campo.setBorder(BorderFactory.createEmptyBorder());
 
@@ -95,7 +95,6 @@ public class SudokuGUI extends JFrame {
         JPanel painelBotoes = new JPanel(new FlowLayout(FlowLayout.CENTER, 8, 10));
         painelBotoes.setOpaque(false);
 
-        // Substring do botão EXEMPLO trocado por VERIFICAR
         BotaoArredondado verificar = new BotaoArredondado("VERIFICAR", new Color(38, 166, 154));
         BotaoArredondado resolver = new BotaoArredondado("RESOLVER", new Color(233, 30, 99));
         BotaoArredondado limpar = new BotaoArredondado("LIMPAR", new Color(125, 78, 105));
@@ -125,7 +124,6 @@ public class SudokuGUI extends JFrame {
         setSize(600, 720);
         setLocationRelativeTo(null);
 
-        // Gera automaticamente um novo jogo ao abrir a tela
         carregarNovoJogo();
     }
 
@@ -141,9 +139,9 @@ public class SudokuGUI extends JFrame {
     }
 
     private void verificarJogadas() {
-        int[][] tabuleiro = lerTabuleiro();
+        int[][] tabuleiroUsuario = lerTabuleiro();
 
-        if (tabuleiro == null) {
+        if (tabuleiroUsuario == null) {
             JOptionPane.showMessageDialog(this,
                     "Por favor, digite apenas números válidos entre 1 e 9.", 
                     "Entrada Inválida", JOptionPane.ERROR_MESSAGE);
@@ -153,16 +151,16 @@ public class SudokuGUI extends JFrame {
         // 1. Checa por duplicações diretas na linha, coluna ou bloco 3x3
         for (int l = 0; l < 9; l++) {
             for (int c = 0; c < 9; c++) {
-                int valor = tabuleiro[l][c];
+                int valor = tabuleiroUsuario[l][c];
                 if (valor == 0) continue;
 
-                tabuleiro[l][c] = 0;
-                boolean invalido = !podeColocarAuxiliar(tabuleiro, l, c, valor);
-                tabuleiro[l][c] = valor;
+                tabuleiroUsuario[l][c] = 0;
+                boolean conflito = !podeColocarAuxiliar(tabuleiroUsuario, l, c, valor);
+                tabuleiroUsuario[l][c] = valor;
 
-                if (invalido) {
+                if (conflito) {
                     JOptionPane.showMessageDialog(this,
-                            String.format("Conflito encontrado! O número %d na Linha %d, Coluna %d repete na mesma linha, coluna ou bloco 3x3.", 
+                            String.format("Conflito encontrado! O número %d na Linha %d, Coluna %d já existe na mesma linha, coluna ou bloco 3x3.", 
                                     valor, l + 1, c + 1),
                             "Regra do Sudoku Violada", JOptionPane.WARNING_MESSAGE);
                     return;
@@ -170,33 +168,68 @@ public class SudokuGUI extends JFrame {
             }
         }
 
-        // 2. Testa se o tabuleiro atual pode ser resolvido
-        SudokuSolver solver = new SudokuSolver(tabuleiro);
-        if (!solver.resolver()) {
-            JOptionPane.showMessageDialog(this,
-                    "Algum número digitado está incorreto e impede a solução do jogo.",
-                    "Número Errado", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
+        // 2. Extrai apenas os números iniciais (gerados) para obter a solução oficial única
+        int[][] tabuleiroApenasFixos = new int[9][9];
+        int inseridosPeloUsuario = 0;
+        int camposVazios = 0;
 
-        // 3. Checa se o tabuleiro está completamente preenchido
-        boolean preenchido = true;
         for (int l = 0; l < 9; l++) {
             for (int c = 0; c < 9; c++) {
-                if (tabuleiro[l][c] == 0) {
-                    preenchido = false;
-                    break;
+                if (numerosFixos[l][c]) {
+                    tabuleiroApenasFixos[l][c] = tabuleiroUsuario[l][c];
+                } else {
+                    tabuleiroApenasFixos[l][c] = 0;
+                    if (tabuleiroUsuario[l][c] != 0) {
+                        inseridosPeloUsuario++;
+                    } else {
+                        camposVazios++;
+                    }
                 }
             }
         }
 
-        if (preenchido) {
+        if (inseridosPeloUsuario == 0) {
             JOptionPane.showMessageDialog(this,
-                    "Parabéns! Você completou o Sudoku corretamente!",
+                    "Você ainda não inseriu nenhum número para verificar.",
+                    "Tabuleiro sem novos números", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        // Obtém a solução real do puzzle a partir das células fixas
+        SudokuSolver solverGabarito = new SudokuSolver(tabuleiroApenasFixos);
+        if (!solverGabarito.resolver()) {
+            JOptionPane.showMessageDialog(this,
+                    "Não foi possível resolver o tabuleiro original.",
+                    "Erro", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        int[][] solucaoCorreta = solverGabarito.getTabuleiro();
+
+        // 3. Compara o que o usuário digitou com o gabarito
+        for (int l = 0; l < 9; l++) {
+            for (int c = 0; c < 9; c++) {
+                if (!numerosFixos[l][c] && tabuleiroUsuario[l][c] != 0) {
+                    if (tabuleiroUsuario[l][c] != solucaoCorreta[l][c]) {
+                        JOptionPane.showMessageDialog(this,
+                                String.format("O número %d digitado na Linha %d, Coluna %d está incorreto.", 
+                                        tabuleiroUsuario[l][c], l + 1, c + 1),
+                                "Número Incorreto", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+                }
+            }
+        }
+
+        // 4. Mensagens finais com base no progresso
+        if (camposVazios == 0) {
+            JOptionPane.showMessageDialog(this,
+                    "Parabéns! Você completou todo o Sudoku corretamente!",
                     "Vitória!", JOptionPane.INFORMATION_MESSAGE);
         } else {
             JOptionPane.showMessageDialog(this,
-                    "Tudo certo até agora! Todos os números inseridos estão corretos.",
+                    String.format("Tudo certo até agora! Os %d número(s) que você inseriu estão corretos.\nFaltam %d campo(s) para preencher.",
+                            inseridosPeloUsuario, camposVazios),
                     "Progresso Válido", JOptionPane.INFORMATION_MESSAGE);
         }
     }
@@ -329,6 +362,14 @@ public class SudokuGUI extends JFrame {
                     boolean ehFixo = valor != 0;
                     numerosFixos[linha][coluna] = ehFixo;
                     campos[linha][coluna].setEditable(!ehFixo);
+
+                    if (ehFixo) {
+                        campos[linha][coluna].setBackground(COR_CELULA_FIXA);
+                        campos[linha][coluna].setForeground(COR_FUNDO);
+                    } else {
+                        campos[linha][coluna].setBackground(COR_CELULA_EDITAVEL);
+                        campos[linha][coluna].setForeground(COR_TEXTO_EDITAVEL);
+                    }
                 }
 
                 campos[linha][coluna].setText(valor == 0 ? "" : String.valueOf(valor));
