@@ -47,7 +47,7 @@ public class Tabela {
 
     public int buscarIndiceColuna(String nomeColuna) {
         for (int i = 0; i < qtdColunas; i++) {
-            if (colunas[i].getNome().equalsIgnoreCase(nomeColuna)) {
+            if (colunas[i].getNome().equalsIgnoreCase(nomeColuna.trim())) {
                 return i;
             }
         }

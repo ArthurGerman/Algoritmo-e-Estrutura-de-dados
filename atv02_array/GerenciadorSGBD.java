@@ -22,45 +22,75 @@ public class GerenciadorSGBD {
 
     public Tabela buscarTabela(String nome) {
         for (int i = 0; i < qtdTabelas; i++) {
-            if (tabelas[i].getNome().equalsIgnoreCase(nome)) {
+            if (tabelas[i].getNome().equalsIgnoreCase(nome.trim())) {
                 return tabelas[i];
             }
         }
         return null;
     }
 
-    // Executa SELECT de tabela única
-    public void executarSelectSimples(String nomeTabela, String[] colunasDesejadas) {
+    // Inserção manual de registros
+    public boolean inserirRegistro(String nomeTabela, String[] valores) {
         Tabela tabela = buscarTabela(nomeTabela);
-        if (tabela == null) {
-            System.out.println("Erro: Tabela não encontrada.");
-            return;
+        if (tabela == null || valores.length != tabela.getQtdColunas()) {
+            return false;
         }
 
-        int[] indicesColunas = obterIndicesColunas(tabela, colunasDesejadas);
-
-        // Imprime Cabeçalho
-        for (String col : colunasDesejadas) {
-            System.out.print(col + "\t\t");
+        Registro registro = new Registro(tabela.getQtdColunas());
+        for (int i = 0; i < valores.length; i++) {
+            registro.setValor(i, valores[i].trim());
         }
-        System.out.println("\n-------------------------------------------");
 
-        // Imprime Registros
-        for (int i = 0; i < tabela.getQtdRegistros(); i++) {
-            Registro reg = tabela.getRegistros()[i];
-            for (int idx : indicesColunas) {
-                if (idx != -1) {
-                    System.out.print(reg.getValor(idx) + "\t\t");
-                } else {
-                    System.out.print("N/A\t\t");
-                }
-            }
-            System.out.println();
-        }
+        tabela.adicionarRegistro(registro);
+        return true;
     }
 
-    // Executa SELECT com JOIN entre duas tabelas
-    public void executarSelectJoin(
+    // SELECT com filtro WHERE (colunaCondicao = valorCondicao)
+    public Object[][] obterResultadoSelectSimples(String nomeTabela, String[] colunasDesejadas, String colunaWhere, String valorWhere) {
+        Tabela tabela = buscarTabela(nomeTabela);
+        if (tabela == null) return null;
+
+        int[] indicesColunas = obterIndicesColunas(tabela, colunasDesejadas);
+        int idxWhere = (colunaWhere != null && !colunaWhere.trim().isEmpty()) 
+                        ? tabela.buscarIndiceColuna(colunaWhere) 
+                        : -1;
+
+        // 1. Passada de contagem de linhas filtradas
+        int linhasFiltradas = 0;
+        for (int i = 0; i < tabela.getQtdRegistros(); i++) {
+            Registro reg = tabela.getRegistros()[i];
+            if (atendeCondicaoWhere(reg, idxWhere, valorWhere)) {
+                linhasFiltradas++;
+            }
+        }
+
+        // 2. Preenchimento da matriz com os resultados filtrados
+        Object[][] matrizResultado = new Object[linhasFiltradas][colunasDesejadas.length];
+        int linhaMatriz = 0;
+
+        for (int i = 0; i < tabela.getQtdRegistros(); i++) {
+            Registro reg = tabela.getRegistros()[i];
+            if (atendeCondicaoWhere(reg, idxWhere, valorWhere)) {
+                for (int j = 0; j < indicesColunas.length; j++) {
+                    int idx = indicesColunas[j];
+                    matrizResultado[linhaMatriz][j] = (idx != -1 && idx < reg.getValores().length) 
+                                                      ? reg.getValor(idx) 
+                                                      : "N/A";
+                }
+                linhaMatriz++;
+            }
+        }
+
+        return matrizResultado;
+    }
+
+    private boolean atendeCondicaoWhere(Registro reg, int idxWhere, String valorWhere) {
+        if (idxWhere == -1) return true; // Sem filtro WHERE
+        String valorReg = reg.getValor(idxWhere);
+        return valorReg != null && valorReg.equalsIgnoreCase(valorWhere.trim());
+    }
+
+    public Object[][] obterResultadoJoin(
             String nomeTabA, String nomeTabB,
             String colJoinA, String colJoinB,
             String[] colunasExibirTabA, String[] colunasExibirTabB) {
@@ -68,28 +98,31 @@ public class GerenciadorSGBD {
         Tabela tabA = buscarTabela(nomeTabA);
         Tabela tabB = buscarTabela(nomeTabB);
 
-        if (tabA == null || tabB == null) {
-            System.out.println("Erro: Uma ou ambas as tabelas não foram encontradas.");
-            return;
-        }
+        if (tabA == null || tabB == null) return null;
 
         int idxJoinA = tabA.buscarIndiceColuna(colJoinA);
         int idxJoinB = tabB.buscarIndiceColuna(colJoinB);
 
-        if (idxJoinA == -1 || idxJoinB == -1) {
-            System.out.println("Erro: Colunas de JOIN inválidas.");
-            return;
-        }
+        if (idxJoinA == -1 || idxJoinB == -1) return null;
 
         int[] idxsExibirA = obterIndicesColunas(tabA, colunasExibirTabA);
         int[] idxsExibirB = obterIndicesColunas(tabB, colunasExibirTabB);
 
-        // Imprime Cabeçalho
-        for (String c : colunasExibirTabA) System.out.print(tabA.getNome() + "." + c + "\t\t");
-        for (String c : colunasExibirTabB) System.out.print(tabB.getNome() + "." + c + "\t\t");
-        System.out.println("\n------------------------------------------------------------------");
+        int contadorResultados = 0;
+        for (int i = 0; i < tabA.getQtdRegistros(); i++) {
+            String valA = tabA.getRegistros()[i].getValor(idxJoinA);
+            for (int j = 0; j < tabB.getQtdRegistros(); j++) {
+                String valB = tabB.getRegistros()[j].getValor(idxJoinB);
+                if (valA != null && valA.equals(valB)) {
+                    contadorResultados++;
+                }
+            }
+        }
 
-        // Algoritmo de Nested Loop Join usando Arrays
+        int totalColunas = colunasExibirTabA.length + colunasExibirTabB.length;
+        Object[][] matrizResultado = new Object[contadorResultados][totalColunas];
+
+        int linhaAtual = 0;
         for (int i = 0; i < tabA.getQtdRegistros(); i++) {
             Registro regA = tabA.getRegistros()[i];
             String valorChaveA = regA.getValor(idxJoinA);
@@ -98,20 +131,20 @@ public class GerenciadorSGBD {
                 Registro regB = tabB.getRegistros()[j];
                 String valorChaveB = regB.getValor(idxJoinB);
 
-                // Casamento de Chaves
                 if (valorChaveA != null && valorChaveA.equals(valorChaveB)) {
-                    // Imprime valores da Tabela A
+                    int colAtual = 0;
                     for (int idx : idxsExibirA) {
-                        System.out.print(regA.getValor(idx) + "\t\t");
+                        matrizResultado[linhaAtual][colAtual++] = (idx != -1) ? regA.getValor(idx) : "N/A";
                     }
-                    // Imprime valores da Tabela B
                     for (int idx : idxsExibirB) {
-                        System.out.print(regB.getValor(idx) + "\t\t");
+                        matrizResultado[linhaAtual][colAtual++] = (idx != -1) ? regB.getValor(idx) : "N/A";
                     }
-                    System.out.println();
+                    linhaAtual++;
                 }
             }
         }
+
+        return matrizResultado;
     }
 
     private int[] obterIndicesColunas(Tabela tabela, String[] nomesColunas) {
