@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Centro de Controle Espacial - NEXUS-1</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Google Fonts para estilo futurista -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="header">
+        <h1>🌌 CENTRO DE CONTROLE ESPACIAL</h1>
+        <p>Sistema de Gerenciamento de Chamadas Técnicas e Missões Orbitais</p>
+    </header>
+
+    <main class="dashboard-grid">
+        <!-- MÓDULO 1: TERMINAL DE SOLICITAÇÃO -->
+        <section class="panel">
+            <h2>📡 1. Terminal de Solicitação</h2>
+            <div class="form-group">
+                <input type="text" id="nomeNave" placeholder="Nome da Nave (ex: USS Discovery)" />
+                <input type="text" id="codigoMissao" placeholder="Código da Missão (ex: MIS-01)" />
+                <select id="setorOrbital">
+                    <option value="COMUNICACOES">Setor: Comunicações</option>
+                    <option value="ENERGIA">Setor: Energia</option>
+                    <option value="NAVEGACAO">Setor: Navegação</option>
+                    <option value="SUPORTE_VIDA">Setor: Suporte à Vida</option>
+                </select>
+                <select id="prioridadeTicket">
+                    <option value="NORMAL">Normal</option>
+                    <option value="ALTA">Alta Prioridade</option>
+                    <option value="EMERGENCIA">🚨 Emergência Crítica</option>
+                </select>
+                <textarea id="descricaoOcorrencia" placeholder="Descrição breve da ocorrência..."></textarea>
+                <label><input type="checkbox" id="tripulacaoHumana" checked> Tripulação Humana a Bordo</label>
+                <button id="btnEmitirTicket" class="btn primary">Emitir Ticket de Chamado</button>
+            </div>
+            <div class="queue-status">
+                <h3>Filas de Espera na Triagem:</h3>
+                <div id="listaEsperaTriagem" class="queue-box">Nenhum ticket pendente.</div>
+            </div>
+        </section>
+
+        <!-- MÓDULO 2: PAINEL CENTRAL DE TRIAGEM -->
+        <section class="panel">
+            <h2>⚙️ 2. Painel Central de Triagem</h2>
+            <div class="operator-controls">
+                <input type="text" id="nomeOperador" placeholder="Nome do Operador Técnico" value="Operador Alpha" />
+                <button id="btnProcessarTriagem" class="btn warning">Atender Próximo Ticket (Fila)</button>
+            </div>
+            <div class="active-processing">
+                <h3>Último Ticket Triado & Redirecionado:</h3>
+                <div id="infoTriagemAtual" class="card-display">Aguardando operação...</div>
+            </div>
+        </section>
+
+        <!-- MÓDULO 3: PAINEL DE ATENDIMENTO ESPECIALIZADO -->
+        <section class="panel">
+            <h2>🔬 3. Painel de Especialistas</h2>
+            <div class="specialist-selector">
+                <select id="setorEspecialista">
+                    <option value="COMUNICACOES">Especialista: Comunicações</option>
+                    <option value="ENERGIA">Especialista: Energia</option>
+                    <option value="NAVEGACAO">Especialista: Navegação</option>
+                    <option value="SUPORTE_VIDA">Especialista: Suporte à Vida</option>
+                </select>
+                <button id="btnConcluirEspecialista" class="btn success">Concluir Atendimento do Setor</button>
+            </div>
+            <div class="queues-specialists">
+                <h3>Filas Ativas por Especialista:</h3>
+                <div id="paineisEspecialistasContainer" class="specialist-box">
+                    <!-- Preenchido via TypeScript -->
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- PAINEL ANALÍTICO DE ESTATÍSTICAS -->
+    <footer class="analytics-footer">
+        <h3>📊 Módulo Analítico & Estatísticas Diárias</h3>
+        <div id="painelEstatisticas" class="stats-grid">
+            <span>Total de Solicitações: <strong id="statTotal">0</strong></span>
+            <span>Emergências: <strong id="statEmergencia">0</strong></span>
+            <span>Nave Mais Acionada: <strong id="statTopNave">Nenhuma</strong></span>
+        </div>
+    </footer>
+
+    <script type="module" src="ui.js"></script>
+</body>
+</html>
