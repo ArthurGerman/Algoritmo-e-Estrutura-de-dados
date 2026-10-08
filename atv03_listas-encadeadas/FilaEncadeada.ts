@@ -1,4 +1,4 @@
-import { Node } from './Node';
+import { Node } from './Node.js';
 
 export class FilaEncadeada<T> {
     private head: Node<T> | null = null;

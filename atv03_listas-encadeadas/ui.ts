@@ -1,150 +1,228 @@
-import { CentroControleEspacial } from './CentroControleEspacial';
-import { SetorOrbital, Prioridade } from './Modelos';
+import { CentroControleEspacial } from './CentroControleEspacial.js';
+import { SETORES } from './Modelos.js';
+import type { SetorOrbital, Prioridade, Ticket } from './Modelos.js';
 
 const centro = new CentroControleEspacial();
 
-// Elementos do DOM
-const inputNave = document.getElementById('nomeNave') as HTMLInputElement;
-const inputMissao = document.getElementById('codigoMissao') as HTMLInputElement;
-const selectSetor = document.getElementById('setorOrbital') as HTMLSelectElement;
-const selectPrioridade = document.getElementById('prioridadeTicket') as HTMLSelectElement;
-const inputDescricao = document.getElementById('descricaoOcorrencia') as HTMLTextAreaElement;
-const checkTripulacao = document.getElementById('tripulacaoHumana') as HTMLInputElement;
+const ROTULO_SETOR: Record<SetorOrbital, string> = {
+    COMUNICACOES: 'Comunicações',
+    ENERGIA: 'Energia',
+    NAVEGACAO: 'Navegação',
+    SUPORTE_VIDA: 'Suporte à Vida'
+};
+const ICONE: Record<Prioridade, string> = { EMERGENCIA: '🟥', ALTA: '🟧', NORMAL: '🟩' };
+const ROTULO_PRIORIDADE: Record<Prioridade, string> = { EMERGENCIA: 'Emergência', ALTA: 'Alta Prioridade', NORMAL: 'Normal' };
 
-const btnEmitir = document.getElementById('btnEmitirTicket') as HTMLButtonElement;
-const btnTriagem = document.getElementById('btnProcessarTriagem') as HTMLButtonElement;
-const inputOperador = document.getElementById('nomeOperador') as HTMLInputElement;
-const infoTriagem = document.getElementById('infoTriagemAtual') as HTMLDivElement;
-const listaEsperaTriagem = document.getElementById('listaEsperaTriagem') as HTMLDivElement;
-
-const selectEspSetor = document.getElementById('setorEspecialista') as HTMLSelectElement;
-const btnEspecialista = document.getElementById('btnConcluirEspecialista') as HTMLButtonElement;
-const painelEspecialistasContainer = document.getElementById('paineisEspecialistasContainer') as HTMLDivElement;
-
-// Estatísticas Globais no Rodapé
-const statTotal = document.getElementById('statTotal') as HTMLElement;
-const statEmergencia = document.getElementById('statEmergencia') as HTMLElement;
-const statTopNave = document.getElementById('statTopNave') as HTMLElement;
-
-let totalEmergenciasCount = 0;
-let totalGeralCount = 0;
-const historicoNavesUI: Record<string, number> = {};
-
-// 1. Emitir Ticket
-btnEmitir.addEventListener('click', () => {
-    const nome = inputNave.value.trim() || "Nave Desconhecida";
-    const missao = inputMissao.value.trim() || "MIS-GEN";
-    const setor = selectSetor.value as SetorOrbital;
-    const prioridade = selectPrioridade.value as Prioridade;
-    const desc = inputDescricao.value.trim() || "Sem descrição";
-    const tripulacao = checkTripulacao.checked;
-
-    centro.criarTicket(nome, missao, setor, desc, tripulacao, prioridade);
-
-    totalGeralCount++;
-    if (prioridade === 'EMERGENCIA') totalEmergenciasCount++;
-    historicoNavesUI[nome] = (historicoNavesUI[nome] || 0) + 1;
-
-    atualizarEstatisticasUI();
-    atualizarFilaEsperaVisual();
-
-    inputNave.value = '';
-    inputMissao.value = '';
-    inputDescricao.value = '';
-});
-
-// 2. Processar Triagem
-btnTriagem.addEventListener('click', () => {
-    const operador = inputOperador.value.trim() || "Operador Padrão";
-
-    centro.processarProximaTriagem(operador);
-
-    const filaAtual = centro.obterFilaTriagem();
-
-    if (filaAtual.length === 0) {
-        infoTriagem.innerHTML = `<span style="color: var(--accent-cyan)">Operador **${operador}** não há tickets pendentes para triagem.</span>`;
-    } else {
-        const proximoTicket = filaAtual[0];
-
-        if (!proximoTicket) {
-            infoTriagem.innerHTML = `<span style="color: var(--accent-cyan)">Operador **${operador}** não há tickets pendentes para triagem.</span>`;
-        } else {
-            infoTriagem.innerHTML = `<span style="color: var(--accent-cyan)">Operador **${operador}** priorizou a nave **${proximoTicket.nomeNave}** (${proximoTicket.prioridade}) e encaminhou para **${proximoTicket.setor}**.</span>`;
-        }
-    }
-
-    atualizarFilaEsperaVisual();
-    atualizarEspecialistasVisual();
-});
-
-// 3. Concluir Especialista
-btnEspecialista.addEventListener('click', () => {
-    const setorEscolhido = selectEspSetor.value as SetorOrbital;
-    centro.concluirAtendimentoEspecialista(setorEscolhido);
-
-    atualizarEspecialistasVisual();
-});
-
-function adicionarTagFilaEspera(nome: string, prioridade: string) {
-    if (listaEsperaTriagem.innerText.includes("Nenhum ticket pendente")) {
-        listaEsperaTriagem.innerHTML = '';
-    }
-    const tag = document.createElement('div');
-    tag.className = `ticket-tag ${prioridade}`;
-    tag.innerText = `[${prioridade}] Nave: ${nome} entrou na fila encadeada.`;
-    listaEsperaTriagem.appendChild(tag);
+function $<T extends HTMLElement>(id: string): T {
+    const el = document.getElementById(id);
+    if (!el) throw new Error(`Elemento #${id} não encontrado no HTML`);
+    return el as T;
 }
 
-function atualizarFilaEsperaVisual() {
-    const filaTriagem = centro.obterFilaTriagem();
-    listaEsperaTriagem.innerHTML = '';
+/** Cria um elemento usando textContent (evita injetar HTML digitado pelo usuário). */
+function criar(tag: string, classe: string, texto = ''): HTMLElement {
+    const el = document.createElement(tag);
+    if (classe) el.className = classe;
+    el.textContent = texto;
+    return el;
+}
 
-    if (filaTriagem.length === 0) {
-        listaEsperaTriagem.innerHTML = "Nenhum ticket pendente na triagem.";
+// ---- Elementos do DOM ----
+const inputNave = $<HTMLInputElement>('nomeNave');
+const btnEmergencia = $<HTMLButtonElement>('btnEmergencia');
+const btnAlta = $<HTMLButtonElement>('btnAlta');
+const btnNormal = $<HTMLButtonElement>('btnNormal');
+const infoTerminal = $<HTMLDivElement>('infoTerminal');
+const listaEsperaTriagem = $<HTMLDivElement>('listaEsperaTriagem');
+
+const inputOperador = $<HTMLInputElement>('nomeOperador');
+const btnChamar = $<HTMLButtonElement>('btnChamarProximo');
+const infoTriagem = $<HTMLDivElement>('infoTriagemAtual');
+const inputMissao = $<HTMLInputElement>('codigoMissao');
+const selectSetor = $<HTMLSelectElement>('setorOrbital');
+const inputDescricao = $<HTMLTextAreaElement>('descricaoOcorrencia');
+const checkTripulacao = $<HTMLInputElement>('tripulacaoHumana');
+const btnRegistrar = $<HTMLButtonElement>('btnRegistrarTriagem');
+
+const selectEspSetor = $<HTMLSelectElement>('setorEspecialista');
+const inputRegistro = $<HTMLTextAreaElement>('registroAtendimento');
+const btnEspecialista = $<HTMLButtonElement>('btnConcluirEspecialista');
+const infoEspecialista = $<HTMLDivElement>('infoEspecialista');
+const painelEspecialistas = $<HTMLDivElement>('paineisEspecialistasContainer');
+
+// Operador que está com um ticket aberto (null = nenhum)
+let operadorAtivo: string | null = null;
+
+// ---------------- 1. Terminal de Solicitação ----------------
+function emitir(prioridade: Prioridade): void {
+    const nome = inputNave.value.trim();
+    if (!nome) {
+        infoTerminal.textContent = 'Informe o nome da nave antes de emitir o ticket.';
+        inputNave.focus();
         return;
     }
 
-    for (const ticket of filaTriagem) {
-        const tag = document.createElement('div');
-        tag.className = `ticket-tag ${ticket.prioridade}`;
-        tag.innerText = `[${ticket.prioridade}] Nave: ${ticket.nomeNave} • Missão: ${ticket.codigoMissao} • Setor: ${ticket.setor}`;
-        listaEsperaTriagem.appendChild(tag);
-    }
+    const ticket = centro.criarTicket(nome, prioridade);
+    const posicao = centro.posicaoNaFila(ticket);
+
+    infoTerminal.textContent =
+        `${ticket.id} · Nave ${ticket.nomeNave} · ${ICONE[prioridade]} ${ROTULO_PRIORIDADE[prioridade]} · ` +
+        `Posição na fila: ${posicao ?? '-'}º`;
+
+    inputNave.value = '';
+    atualizarTudo();
 }
 
-function atualizarEspecialistasVisual() {
+btnEmergencia.addEventListener('click', () => emitir('EMERGENCIA'));
+btnAlta.addEventListener('click', () => emitir('ALTA'));
+btnNormal.addEventListener('click', () => emitir('NORMAL'));
+
+// ---------------- 2. Painel Central de Triagem ----------------
+function habilitarRegistro(habilitar: boolean): void {
+    inputMissao.disabled = !habilitar;
+    selectSetor.disabled = !habilitar;
+    inputDescricao.disabled = !habilitar;
+    checkTripulacao.disabled = !habilitar;
+    btnRegistrar.disabled = !habilitar;
+    btnChamar.disabled = habilitar;
+    inputOperador.disabled = habilitar; // não troca de operador no meio de um atendimento
+}
+
+btnChamar.addEventListener('click', () => {
+    const operador = inputOperador.value.trim() || 'Operador Padrão';
+    const ticket = centro.chamarProximoTicket(operador);
+
+    if (!ticket) {
+        infoTriagem.textContent = 'Nenhum ticket pendente para triagem.';
+        return;
+    }
+
+    operadorAtivo = operador;
+    infoTriagem.textContent =
+        `Nave ${ticket.nomeNave} · ${ICONE[ticket.prioridade]} ${ROTULO_PRIORIDADE[ticket.prioridade]} · ` +
+        `Operador: ${operador}`;
+    habilitarRegistro(true);
+    inputMissao.focus();
+    atualizarTudo();
+});
+
+btnRegistrar.addEventListener('click', () => {
+    if (!operadorAtivo) return;
+
+    const codigoMissao = inputMissao.value.trim();
+    if (!codigoMissao) {
+        infoTriagem.textContent = 'Informe o código da missão para registrar a chamada.';
+        inputMissao.focus();
+        return;
+    }
+
+    const setor = selectSetor.value as SetorOrbital;
+    const ticket = centro.registrarTriagem(operadorAtivo, {
+        codigoMissao,
+        setor,
+        descricao: inputDescricao.value.trim() || 'Sem descrição',
+        tripulacaoHumana: checkTripulacao.checked
+    });
+
+    if (ticket) {
+        infoTriagem.textContent =
+            `Operador ${operadorAtivo} registrou a nave ${ticket.nomeNave} (${ticket.prioridade}) ` +
+            `e encaminhou para ${ROTULO_SETOR[setor]}.`;
+    }
+
+    operadorAtivo = null;
+    inputMissao.value = '';
+    inputDescricao.value = '';
+    checkTripulacao.checked = true;
+    habilitarRegistro(false);
+    atualizarTudo();
+});
+
+// ---------------- 3. Painel de Especialistas ----------------
+btnEspecialista.addEventListener('click', () => {
+    const setor = selectEspSetor.value as SetorOrbital;
+    const ticket = centro.concluirAtendimentoEspecialista(setor, inputRegistro.value.trim());
+
+    infoEspecialista.textContent = ticket
+        ? `Atendimento finalizado: nave ${ticket.nomeNave} (Missão ${ticket.codigoMissao}).`
+        : `Fila de ${ROTULO_SETOR[setor]} vazia. Nenhum atendimento pendente.`;
+
+    inputRegistro.value = '';
+    atualizarTudo();
+});
+
+// ---------------- Renderização ----------------
+function renderFilaTriagem(): void {
+    const fila = centro.obterFilaTriagem();
+    listaEsperaTriagem.replaceChildren();
+
+    if (fila.length === 0) {
+        listaEsperaTriagem.textContent = 'Nenhum ticket pendente na triagem.';
+        return;
+    }
+
+    fila.forEach((ticket, i) => {
+        listaEsperaTriagem.appendChild(
+            criar('div', `ticket-tag ${ticket.prioridade}`,
+                `${i + 1}º · ${ticket.id} · ${ICONE[ticket.prioridade]} ${ticket.nomeNave}`)
+        );
+    });
+}
+
+function renderEspecialistas(): void {
     const filas = centro.obterFilasEspecialistas();
-    const setores: SetorOrbital[] = ['COMUNICACOES', 'ENERGIA', 'NAVEGACAO', 'SUPORTE_VIDA'];
+    painelEspecialistas.replaceChildren();
 
-    painelEspecialistasContainer.innerHTML = '';
-
-    for (const setor of setores) {
+    for (const setor of SETORES) {
         const fila = filas[setor];
-        const linha = document.createElement('div');
-        linha.className = 'ticket-tag';
+        const historico = centro.obterHistoricoEspecialista(setor);
+        const card = criar('div', 'setor-card');
+        card.appendChild(criar('div', 'titulo', ROTULO_SETOR[setor].toUpperCase()));
 
         if (fila.length === 0) {
-            linha.innerText = `${setor}: sem atendimentos pendentes.`;
+            card.appendChild(criar('div', 'ticket-tag', 'Sem atendimentos pendentes.'));
         } else {
-            const nomes = fila.map((ticket) => `${ticket.nomeNave} (${ticket.prioridade})`).join(' | ');
-            linha.innerText = `${setor}: ${nomes}`;
+            fila.forEach((ticket, i) => {
+                const linha = criar('div', `ticket-tag ${ticket.prioridade}${i === 0 ? ' chamando' : ''}`,
+                    `${i === 0 ? '📣 Chamando: ' : `${i + 1}º · `}${ticket.nomeNave}`);
+                linha.appendChild(criar('small', '', `Missão ${ticket.codigoMissao} — ${ticket.descricao}`));
+                card.appendChild(linha);
+            });
         }
 
-        painelEspecialistasContainer.appendChild(linha);
+        // Histórico vem de uma pilha: o mais recente aparece primeiro
+        if (historico.length > 0) {
+            const recentes = historico.slice(0, 3).map((t) => t.nomeNave).join(', ');
+            card.appendChild(criar('small', '', `Últimos finalizados: ${recentes}`));
+        }
+
+        painelEspecialistas.appendChild(card);
     }
 }
 
-function atualizarEstatisticasUI() {
-    statTotal.innerText = totalGeralCount.toString();
-    statEmergencia.innerText = totalEmergenciasCount.toString();
+function renderEstatisticas(): void {
+    const e = centro.obterEstatisticas();
+    $('statData').textContent = e.data;
+    $('statTotal').textContent = String(e.totalSolicitacoes);
+    $('statEmergencia').textContent = String(e.triadosPorPrioridade.EMERGENCIA);
+    $('statAlta').textContent = String(e.triadosPorPrioridade.ALTA);
+    $('statNormal').textContent = String(e.triadosPorPrioridade.NORMAL);
+    $('statTopNave').textContent = e.naveMaisChamados
+        ? `${e.naveMaisChamados.nome} (${e.naveMaisChamados.chamados}x)`
+        : 'Nenhuma';
 
-    let topNave = "Nenhuma";
-    let max = 0;
-    for (const [nave, qtd] of Object.entries(historicoNavesUI)) {
-        if (qtd > max) {
-            max = qtd;
-            topNave = `${nave} (${qtd}x)`;
-        }
-    }
-    statTopNave.innerText = topNave;
+    const operadores = Object.entries(e.porOperador).map(([nome, qtd]) => `${nome}: ${qtd}`).join(' | ');
+    $('statOperadores').textContent = operadores || '—';
+
+    $('statEspecialistas').textContent = SETORES
+        .map((s) => `${ROTULO_SETOR[s]}: ${e.porEspecialista[s]}`)
+        .join(' | ');
 }
+
+function atualizarTudo(): void {
+    renderFilaTriagem();
+    renderEspecialistas();
+    renderEstatisticas();
+}
+
+atualizarTudo();

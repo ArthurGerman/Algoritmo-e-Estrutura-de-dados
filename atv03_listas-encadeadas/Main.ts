@@ -1,23 +1,28 @@
-import { CentroControleEspacial } from './CentroControleEspacial';
+import { CentroControleEspacial } from './CentroControleEspacial.js';
 
 const centro = new CentroControleEspacial();
 
-// 1. Simulando entradas no Terminal de Solicitação
-centro.criarTicket("USS Discovery", "MIS-01", "COMUNICACOES", "Falha no canal quântico", true, "ALTA");
-centro.criarTicket("Apollo 14", "MIS-02", "SUPORTE_VIDA", "Queda de oxigênio no setor 4", true, "EMERGENCIA");
-centro.criarTicket("Voyager X", "MIS-03", "NAVEGACAO", "Consulta de rota estelar", false, "NORMAL");
+// 1. Terminal de Solicitação: a nave só informa o nome e a prioridade
+centro.criarTicket("USS Discovery", "ALTA");
+centro.criarTicket("Apollo 14", "EMERGENCIA");
+centro.criarTicket("Voyager X", "NORMAL");
 
 console.log("\n--- INICIANDO A TRIAGEM ---");
-// Operador Carlos atende (deve puxar a EMERGÊNCIA primeiro)
-centro.processarProximaTriagem("Carlos");
-// Operador Carlos atende novamente (puxa a ALTA)
-centro.processarProximaTriagem("Carlos");
-// Operadora Ana atende (puxa a NORMAL)
-centro.processarProximaTriagem("Ana");
+// Carlos chama (deve vir a EMERGÊNCIA) e registra os dados
+centro.chamarProximoTicket("Carlos");
+centro.registrarTriagem("Carlos", { codigoMissao: "MIS-02", setor: "SUPORTE_VIDA", descricao: "Queda de oxigênio no setor 4", tripulacaoHumana: true });
+
+// Carlos chama de novo (vem a ALTA)
+centro.chamarProximoTicket("Carlos");
+centro.registrarTriagem("Carlos", { codigoMissao: "MIS-01", setor: "COMUNICACOES", descricao: "Falha no canal quântico", tripulacaoHumana: true });
+
+// Ana chama (vem a NORMAL)
+centro.chamarProximoTicket("Ana");
+centro.registrarTriagem("Ana", { codigoMissao: "MIS-03", setor: "NAVEGACAO", descricao: "Consulta de rota estelar", tripulacaoHumana: false });
 
 console.log("\n--- ATENDIMENTO DOS ESPECIALISTAS ---");
-centro.concluirAtendimentoEspecialista("SUPORTE_VIDA");
+centro.concluirAtendimentoEspecialista("SUPORTE_VIDA", "Suprimento de oxigênio restabelecido");
 centro.concluirAtendimentoEspecialista("COMUNICACOES");
 
-// 4. Exibir Relatórios Finais exigidos pela disciplina
+// Relatórios finais
 centro.exibirRelatorios();

@@ -1,20 +1,12 @@
 {
-  "name": "atv03_listas-encadeadas",
+  "name": "centro-controle-espacial",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc --noEmit && vite build",
-    "preview": "vite preview",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsc",
+    "start:console": "tsc && node Main.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
   "devDependencies": {
-    "typescript": "^7.0.2",
-    "vite": "^8.3.2"
+    "typescript": "^5.6.0"
   }
 }

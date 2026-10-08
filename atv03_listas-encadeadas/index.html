@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Centro de Controle Espacial - NEXUS-1</title>
     <link rel="stylesheet" href="style.css">
-    <!-- Google Fonts para estilo futurista -->
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -20,24 +19,18 @@
             <h2>📡 1. Terminal de Solicitação</h2>
             <div class="form-group">
                 <input type="text" id="nomeNave" placeholder="Nome da Nave (ex: USS Discovery)" />
-                <input type="text" id="codigoMissao" placeholder="Código da Missão (ex: MIS-01)" />
-                <select id="setorOrbital">
-                    <option value="COMUNICACOES">Setor: Comunicações</option>
-                    <option value="ENERGIA">Setor: Energia</option>
-                    <option value="NAVEGACAO">Setor: Navegação</option>
-                    <option value="SUPORTE_VIDA">Setor: Suporte à Vida</option>
-                </select>
-                <select id="prioridadeTicket">
-                    <option value="NORMAL">Normal</option>
-                    <option value="ALTA">Alta Prioridade</option>
-                    <option value="EMERGENCIA">🚨 Emergência Crítica</option>
-                </select>
-                <textarea id="descricaoOcorrencia" placeholder="Descrição breve da ocorrência..."></textarea>
-                <label><input type="checkbox" id="tripulacaoHumana" checked> Tripulação Humana a Bordo</label>
-                <button id="btnEmitirTicket" class="btn primary">Emitir Ticket de Chamado</button>
+                <div class="btn-row">
+                    <button id="btnEmergencia" class="btn danger">🟥 Emergência</button>
+                    <button id="btnAlta" class="btn warning">🟧 Alta</button>
+                    <button id="btnNormal" class="btn success">🟩 Normal</button>
+                </div>
             </div>
             <div class="queue-status">
-                <h3>Filas de Espera na Triagem:</h3>
+                <h3>Último ticket emitido:</h3>
+                <div id="infoTerminal" class="card-display">Aguardando solicitação...</div>
+            </div>
+            <div class="queue-status">
+                <h3>Fila de espera na triagem:</h3>
                 <div id="listaEsperaTriagem" class="queue-box">Nenhum ticket pendente.</div>
             </div>
         </section>
@@ -47,11 +40,24 @@
             <h2>⚙️ 2. Painel Central de Triagem</h2>
             <div class="operator-controls">
                 <input type="text" id="nomeOperador" placeholder="Nome do Operador Técnico" value="Operador Alpha" />
-                <button id="btnProcessarTriagem" class="btn warning">Atender Próximo Ticket (Fila)</button>
+                <button id="btnChamarProximo" class="btn warning">Chamar Próximo Ticket</button>
             </div>
             <div class="active-processing">
-                <h3>Último Ticket Triado & Redirecionado:</h3>
+                <h3>Nave chamada:</h3>
                 <div id="infoTriagemAtual" class="card-display">Aguardando operação...</div>
+            </div>
+            <h3>Registro da chamada:</h3>
+            <div class="form-group">
+                <input type="text" id="codigoMissao" placeholder="Código da Missão (ex: MIS-01)" disabled />
+                <select id="setorOrbital" disabled>
+                    <option value="COMUNICACOES">Setor: Comunicações</option>
+                    <option value="ENERGIA">Setor: Energia</option>
+                    <option value="NAVEGACAO">Setor: Navegação</option>
+                    <option value="SUPORTE_VIDA">Setor: Suporte à Vida</option>
+                </select>
+                <textarea id="descricaoOcorrencia" placeholder="Descrição breve da ocorrência..." disabled></textarea>
+                <label><input type="checkbox" id="tripulacaoHumana" checked disabled> Tripulação Humana a Bordo</label>
+                <button id="btnRegistrarTriagem" class="btn primary" disabled>Registrar e Encaminhar ao Especialista</button>
             </div>
         </section>
 
@@ -65,27 +71,31 @@
                     <option value="NAVEGACAO">Especialista: Navegação</option>
                     <option value="SUPORTE_VIDA">Especialista: Suporte à Vida</option>
                 </select>
+                <textarea id="registroAtendimento" placeholder="Registro do atendimento (opcional)..."></textarea>
                 <button id="btnConcluirEspecialista" class="btn success">Concluir Atendimento do Setor</button>
             </div>
+            <div id="infoEspecialista" class="card-display">Aguardando operação...</div>
             <div class="queues-specialists">
-                <h3>Filas Ativas por Especialista:</h3>
-                <div id="paineisEspecialistasContainer" class="specialist-box">
-                    <!-- Preenchido via TypeScript -->
-                </div>
+                <h3>Filas ativas por especialista:</h3>
+                <div id="paineisEspecialistasContainer" class="specialist-box"></div>
             </div>
         </section>
     </main>
 
     <!-- PAINEL ANALÍTICO DE ESTATÍSTICAS -->
     <footer class="analytics-footer">
-        <h3>📊 Módulo Analítico & Estatísticas Diárias</h3>
-        <div id="painelEstatisticas" class="stats-grid">
+        <h3>📊 Módulo Analítico &amp; Estatísticas Diárias <small id="statData"></small></h3>
+        <div class="stats-grid">
             <span>Total de Solicitações: <strong id="statTotal">0</strong></span>
-            <span>Emergências: <strong id="statEmergencia">0</strong></span>
+            <span>Triados: 🟥 <strong id="statEmergencia">0</strong> · 🟧 <strong id="statAlta">0</strong> · 🟩 <strong id="statNormal">0</strong></span>
             <span>Nave Mais Acionada: <strong id="statTopNave">Nenhuma</strong></span>
+        </div>
+        <div class="stats-grid">
+            <span>Por operador: <strong id="statOperadores">—</strong></span>
+            <span>Finalizados por especialista: <strong id="statEspecialistas">—</strong></span>
         </div>
     </footer>
 
-    <script type="module" src="ui.ts"></script>
+    <script type="module" src="ui.js"></script>
 </body>
 </html>

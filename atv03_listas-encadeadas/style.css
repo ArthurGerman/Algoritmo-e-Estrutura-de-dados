@@ -135,3 +135,16 @@ textarea { resize: vertical; height: 60px; }
     flex-wrap: wrap;
     gap: 15px;
 }
+/* ---- Acréscimos ---- */
+.btn-row { display: flex; gap: 8px; }
+.btn-row .btn { flex: 1; }
+.btn.danger { background-color: var(--accent-red); color: #000; }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+input:disabled, select:disabled, textarea:disabled { opacity: 0.5; }
+h3 { font-size: 0.95rem; color: var(--text-muted); margin: 14px 0 6px; }
+.analytics-footer .stats-grid { margin-bottom: 8px; }
+.analytics-footer small { color: var(--text-muted); font-weight: normal; margin-left: 8px; }
+.ticket-tag.chamando { background: #052e2b; }
+.ticket-tag small { display: block; color: var(--text-muted); margin-top: 2px; }
+.setor-card { margin-bottom: 10px; }
+.setor-card .titulo { color: var(--accent-cyan); font-family: 'Orbitron', sans-serif; font-size: 0.8rem; }
