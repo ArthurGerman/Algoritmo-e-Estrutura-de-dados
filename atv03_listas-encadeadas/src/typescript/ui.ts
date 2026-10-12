@@ -162,6 +162,10 @@ btnRegistrar.addEventListener('click', () => {
 });
 
 // ---------------- 3. Painel de Especialistas ----------------
+selectEspSetor.addEventListener('change', () => {
+    renderEspecialistas();
+});
+
 btnEspecialista.addEventListener('click', () => {
     const setor = selectEspSetor.value as SetorOrbital;
     const ticket = centro.concluirAtendimentoEspecialista(setor, inputRegistro.value.trim());
@@ -193,34 +197,31 @@ function renderFilaTriagem(): void {
 }
 
 function renderEspecialistas(): void {
-    const filas = centro.obterFilasEspecialistas();
+    const setorSelecionado = selectEspSetor.value as SetorOrbital;
+    const fila = centro.obterFilasEspecialistas()[setorSelecionado];
+    const historico = centro.obterHistoricoEspecialista(setorSelecionado);
     painelEspecialistas.replaceChildren();
 
-    for (const setor of SETORES) {
-        const fila = filas[setor];
-        const historico = centro.obterHistoricoEspecialista(setor);
-        const card = criar('div', 'setor-card');
-        card.appendChild(criar('div', 'titulo', ROTULO_SETOR[setor].toUpperCase()));
+    const card = criar('div', 'setor-card');
+    card.appendChild(criar('div', 'titulo', ROTULO_SETOR[setorSelecionado].toUpperCase()));
 
-        if (fila.length === 0) {
-            card.appendChild(criar('div', 'ticket-tag', 'Sem atendimentos pendentes.'));
-        } else {
-            fila.forEach((ticket, i) => {
-                const linha = criar('div', `ticket-tag ${ticket.prioridade}${i === 0 ? ' chamando' : ''}`,
-                    `${i === 0 ? '📣 Chamando: ' : `${i + 1}º · `}${ticket.nomeNave}`);
-                linha.appendChild(criar('small', '', `Missão ${ticket.codigoMissao} — ${ticket.descricao}`));
-                card.appendChild(linha);
-            });
-        }
-
-        // Histórico vem de uma pilha: o mais recente aparece primeiro
-        if (historico.length > 0) {
-            const recentes = historico.slice(0, 3).map((t) => t.nomeNave).join(', ');
-            card.appendChild(criar('small', '', `Últimos finalizados: ${recentes}`));
-        }
-
-        painelEspecialistas.appendChild(card);
+    if (fila.length === 0) {
+        card.appendChild(criar('div', 'ticket-tag', 'Sem atendimentos pendentes.'));
+    } else {
+        fila.forEach((ticket, i) => {
+            const linha = criar('div', `ticket-tag ${ticket.prioridade}${i === 0 ? ' chamando' : ''}`,
+                `${i === 0 ? '📣 Chamando: ' : `${i + 1}º · `}${ticket.nomeNave}`);
+            linha.appendChild(criar('small', '', `Missão ${ticket.codigoMissao} — ${ticket.descricao}`));
+            card.appendChild(linha);
+        });
     }
+
+    if (historico.length > 0) {
+        const recentes = historico.slice(0, 3).map((t) => t.nomeNave).join(', ');
+        card.appendChild(criar('small', '', `Últimos finalizados: ${recentes}`));
+    }
+
+    painelEspecialistas.appendChild(card);
 }
 
 function renderEstatisticas(): void {
