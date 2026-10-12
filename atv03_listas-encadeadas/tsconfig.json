@@ -12,8 +12,8 @@
     "isolatedModules": true,
     "moduleDetection": "force",
     "skipLibCheck": true,
-    "rootDir": ".",
-    "outDir": "dist"
+    "rootDir": "./src/typescript",
+    "outDir": "./dist"
   },
-  "include": ["*.ts"]
+  "include": ["src/typescript/**/*.ts"]
 }

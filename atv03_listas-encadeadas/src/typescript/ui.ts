@@ -50,6 +50,29 @@ const btnEspecialista = $<HTMLButtonElement>('btnConcluirEspecialista');
 const infoEspecialista = $<HTMLDivElement>('infoEspecialista');
 const painelEspecialistas = $<HTMLDivElement>('paineisEspecialistasContainer');
 
+const telas = Array.from(document.querySelectorAll<HTMLElement>('[data-screen]'));
+const linksTelas = Array.from(document.querySelectorAll<HTMLAnchorElement>('[data-screen-target]'));
+
+function atualizarTela(): void {
+    const telaSolicitada = window.location.hash.slice(1);
+    const telaAtiva = telas.find((tela) => tela.id === telaSolicitada) ?? telas[0];
+    if (!telaAtiva) return;
+
+    telas.forEach((tela) => {
+        tela.hidden = tela !== telaAtiva;
+    });
+
+    linksTelas.forEach((link) => {
+        if (link.dataset.screenTarget === telaAtiva.id) {
+            link.setAttribute('aria-current', 'page');
+        } else {
+            link.removeAttribute('aria-current');
+        }
+    });
+}
+
+window.addEventListener('hashchange', atualizarTela);
+
 // Operador que está com um ticket aberto (null = nenhum)
 let operadorAtivo: string | null = null;
 
@@ -225,4 +248,5 @@ function atualizarTudo(): void {
     renderEstatisticas();
 }
 
+atualizarTela();
 atualizarTudo();

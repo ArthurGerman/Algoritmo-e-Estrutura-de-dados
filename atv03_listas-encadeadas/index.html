@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Centro de Controle Espacial - NEXUS-1</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="./src/styles/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -13,9 +13,16 @@
         <p>Sistema de Gerenciamento de Chamadas Técnicas e Missões Orbitais</p>
     </header>
 
-    <main class="dashboard-grid">
+    <nav class="main-nav" aria-label="Navegação principal">
+        <a href="#terminal" data-screen-target="terminal" aria-current="page">Terminal</a>
+        <a href="#triagem" data-screen-target="triagem">Triagem</a>
+        <a href="#especialistas" data-screen-target="especialistas">Especialistas</a>
+        <a href="#dashboard" data-screen-target="dashboard">Dashboard</a>
+    </nav>
+
+    <main class="app-main">
         <!-- MÓDULO 1: TERMINAL DE SOLICITAÇÃO -->
-        <section class="panel">
+        <section class="panel screen" id="terminal" data-screen>
             <h2>📡 1. Terminal de Solicitação</h2>
             <div class="form-group">
                 <input type="text" id="nomeNave" placeholder="Nome da Nave (ex: USS Discovery)" />
@@ -36,7 +43,7 @@
         </section>
 
         <!-- MÓDULO 2: PAINEL CENTRAL DE TRIAGEM -->
-        <section class="panel">
+        <section class="panel screen" id="triagem" data-screen hidden>
             <h2>⚙️ 2. Painel Central de Triagem</h2>
             <div class="operator-controls">
                 <input type="text" id="nomeOperador" placeholder="Nome do Operador Técnico" value="Operador Alpha" />
@@ -62,7 +69,7 @@
         </section>
 
         <!-- MÓDULO 3: PAINEL DE ATENDIMENTO ESPECIALIZADO -->
-        <section class="panel">
+        <section class="panel screen" id="especialistas" data-screen hidden>
             <h2>🔬 3. Painel de Especialistas</h2>
             <div class="specialist-selector">
                 <select id="setorEspecialista">
@@ -80,21 +87,20 @@
                 <div id="paineisEspecialistasContainer" class="specialist-box"></div>
             </div>
         </section>
+        <!-- MÓDULO 4: DASHBOARD ANALÍTICO -->
+        <section class="panel screen" id="dashboard" data-screen hidden>
+            <h2>📊 Dashboard Analítico <small id="statData"></small></h2>
+            <div class="stats-grid">
+                <span>Total de Solicitações: <strong id="statTotal">0</strong></span>
+                <span>Triados: 🟥 <strong id="statEmergencia">0</strong> · 🟧 <strong id="statAlta">0</strong> · 🟩 <strong id="statNormal">0</strong></span>
+                <span>Nave Mais Acionada: <strong id="statTopNave">Nenhuma</strong></span>
+            </div>
+            <div class="stats-grid">
+                <span>Por operador: <strong id="statOperadores">—</strong></span>
+                <span>Finalizados por especialista: <strong id="statEspecialistas">—</strong></span>
+            </div>
+        </section>
     </main>
-
-    <!-- PAINEL ANALÍTICO DE ESTATÍSTICAS -->
-    <footer class="analytics-footer">
-        <h3>📊 Módulo Analítico &amp; Estatísticas Diárias <small id="statData"></small></h3>
-        <div class="stats-grid">
-            <span>Total de Solicitações: <strong id="statTotal">0</strong></span>
-            <span>Triados: 🟥 <strong id="statEmergencia">0</strong> · 🟧 <strong id="statAlta">0</strong> · 🟩 <strong id="statNormal">0</strong></span>
-            <span>Nave Mais Acionada: <strong id="statTopNave">Nenhuma</strong></span>
-        </div>
-        <div class="stats-grid">
-            <span>Por operador: <strong id="statOperadores">—</strong></span>
-            <span>Finalizados por especialista: <strong id="statEspecialistas">—</strong></span>
-        </div>
-    </footer>
 
     <script type="module" src="./dist/ui.js"></script>
 </body>
