@@ -1,0 +1,64 @@
+:root {
+  color-scheme: light dark;
+  --bg: #fbfbfa;
+  --fg: #1d1f21;
+  --muted: #6b7075;
+  --line: #d9dbdd;
+  --accent: #1f5fbf;
+  --error: #b42318;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #17181a;
+    --fg: #e8e9ea;
+    --muted: #9aa0a6;
+    --line: #34373b;
+    --accent: #7ab0ff;
+    --error: #ff8a80;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: 16px/1.5 system-ui, sans-serif;
+}
+main { max-width: 760px; margin: 0 auto; padding: 24px 16px 64px; }
+section, form { margin-top: 32px; padding-top: 16px; border-top: 1px solid var(--line); }
+h1 { font-size: 1.6rem; margin: 0; }
+h2 { font-size: 1.1rem; margin: 0 0 12px; }
+input:not([type='radio']):not([type='checkbox']), textarea {
+  width: 100%;
+  padding: 8px 10px;
+  margin: 4px 0 12px;
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+}
+label { display: block; font-size: 0.95rem; }
+.row { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin-bottom: 12px; }
+.row label { display: inline-flex; gap: 6px; align-items: center; }
+button {
+  font: inherit;
+  padding: 6px 12px;
+  color: inherit;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  cursor: pointer;
+}
+button:hover { border-color: var(--accent); }
+button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.chip { padding: 2px 10px; border-radius: 999px; }
+.muted { color: var(--muted); font-size: 0.9rem; }
+.error { color: var(--error); margin: 0 0 12px; }
+.results, .pages, .tree, .tree ul { list-style: none; padding: 0; margin: 0; }
+.results li { padding: 12px 0; border-bottom: 1px solid var(--line); }
+.pages li { display: flex; justify-content: space-between; gap: 12px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.pages .row { margin: 0; }
+.tree ul { margin-left: 18px; padding-left: 12px; border-left: 1px solid var(--line); }
+.tree { overflow-x: auto; font-size: 0.92rem; }
+.node.terminal { font-weight: 600; }
