@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Triagem de atendimento – Bubble Sort</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <main>
+        <h1>Triagem de atendimento</h1>
+        <p class="lead">Simulação de um pronto-atendimento. Cada paciente que chega entra no fim da fila, e o Bubble
+            Sort reorganiza a fila por prioridade, mostrando cada comparação e troca.</p>
+        <div class="layout">
+            <section class="panel" aria-label="Controles">
+                <h2>Novo paciente</h2>
+                <form id="form">
+                    <label class="field">Nome<input id="name" required maxlength="40" autocomplete="off"></label>
+                    <label class="field">Queixa<input id="complaint" maxlength="60" placeholder="Ex.: dor no peito"
+                            autocomplete="off"></label>
+                    <label class="field">Prioridade
+                        <select id="level">
+                            <option value="1">1 – Emergência</option>
+                            <option value="2">2 – Muito urgente</option>
+                            <option value="3" selected>3 – Urgente</option>
+                            <option value="4">4 – Pouco urgente</option>
+                        </select>
+                    </label>
+                    <button id="add" class="primary">Adicionar à fila</button>
+                </form>
+                <div class="row">
+                    <button id="call" type="button">Chamar próximo</button>
+                    <button id="seed" type="button">Gerar exemplo</button>
+                </div>
+                <label class="inline">Velocidade <input id="speed" type="range" min="1" max="100" value="60"></label>
+                <h2>Última ordenação</h2>
+                <div class="stats">
+                    <div><b id="comparisons">0</b><span>comparações</span></div>
+                    <div><b id="swaps">0</b><span>trocas</span></div>
+                    <div><b id="passes">0</b><span>passadas</span></div>
+                </div>
+                <h2>Em atendimento</h2>
+                <p id="current">Ninguém por enquanto.</p>
+            </section>
+            <section class="panel" aria-label="Fila de espera">
+                <h2>Fila de espera <span id="count"></span></h2>
+                <p id="status" aria-live="polite">Adicione pacientes ou clique em “Gerar exemplo”.</p>
+                <ol id="queue"></ol>
+                <p id="empty" class="muted">A fila está vazia.</p>
+            </section>
+        </div>
+        <h2>Por que Bubble Sort aqui?</h2>
+        <ul>
+            <li>O comparador é <code>a.prioridade - b.prioridade</code>, então o algoritmo ordena objetos, não só
+                números.</li>
+            <li>O Bubble Sort é <b>estável</b>: só troca quando a prioridade é estritamente maior. Pacientes com a mesma
+                prioridade continuam na ordem de chegada.</li>
+            <li>Como a fila já está quase ordenada, a otimização que para ao não haver trocas poupa passadas. Um caso
+                urgente que chega no fim, porém, sobe só uma posição por passada.</li>
+        </ul>
+    </main>
+    <script src="triagem.js"></script>
+</body>
+
+</html>

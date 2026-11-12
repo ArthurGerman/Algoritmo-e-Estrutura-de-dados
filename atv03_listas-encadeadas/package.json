@@ -1,0 +1,12 @@
+{
+  "name": "centro-controle-espacial",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start:console": "tsc && node dist/Main.js"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0"
+  }
+}
