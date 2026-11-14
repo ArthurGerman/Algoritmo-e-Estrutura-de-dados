@@ -3,9 +3,10 @@ import { PageNotFoundError, SearchEngine, ValidationError } from '../src/core';
 import type { PageInput } from '../src/core';
 import { SAMPLE_PAGES, loadSamplePages } from '../src/core/seed/samplePages';
 
+let urlCounter = 0;
 const page = (overrides: Partial<PageInput> = {}): PageInput => ({
   title: 'Título',
-  url: 'https://demo.local/x',
+  url: `https://demo.local/p${++urlCounter}`,
   content: '',
   keywords: [],
   ...overrides,
@@ -221,5 +222,52 @@ describe('SearchEngine: observação e visualização', () => {
     const stats = engine.stats();
     expect(stats.avlHeight).toBeLessThanOrEqual(Math.ceil(1.44 * Math.log2(stats.pageCount + 2)));
     expect(stats.trieNodeCount).toBeGreaterThan(stats.termCount);
+  });
+});
+
+describe('SearchEngine: URLs únicas', () => {
+  it('rejeita URL repetida, inclusive escrita de outro jeito', () => {
+    const engine = new SearchEngine();
+    engine.addPage(page({ title: 'Alfa', url: 'https://Exemplo.com/a#topo' }));
+    expect(() => engine.addPage(page({ title: 'Beta', url: 'https://exemplo.com/a' }))).toThrow(ValidationError);
+    expect(engine.stats().pageCount).toBe(1);
+  });
+
+  it('acha a página pela URL, antes e depois de editar a URL, e esquece ao remover', () => {
+    const engine = new SearchEngine();
+    const created = engine.addPage(page({ title: 'Alfa', url: 'https://x.com/a' }));
+    expect(engine.findPageByUrl('https://x.com/a')?.id).toBe(created.id);
+    expect(engine.findPageByUrl('  https://x.com/a#frag ')?.id).toBe(created.id);
+
+    engine.updatePage(created.id, { url: 'https://x.com/b' });
+    expect(engine.findPageByUrl('https://x.com/a')).toBeUndefined();
+    expect(engine.findPageByUrl('https://x.com/b')?.id).toBe(created.id);
+
+    engine.removePage(created.id);
+    expect(engine.findPageByUrl('https://x.com/b')).toBeUndefined();
+    // a URL liberada pode ser cadastrada de novo
+    expect(() => engine.addPage(page({ title: 'Alfa', url: 'https://x.com/b' }))).not.toThrow();
+  });
+
+  it('não deixa editar a URL de uma página para a de outra', () => {
+    const engine = new SearchEngine();
+    engine.addPage(page({ title: 'Alfa', url: 'https://x.com/a' }));
+    const b = engine.addPage(page({ title: 'Beta', url: 'https://x.com/b' }));
+    expect(() => engine.updatePage(b.id, { url: 'https://x.com/a' })).toThrow(ValidationError);
+    expect(engine.getPage(b.id)?.url).toBe('https://x.com/b');
+    // manter a própria URL ao editar é permitido
+    expect(() => engine.updatePage(b.id, { title: 'Beta 2' })).not.toThrow();
+  });
+
+  it('upsertPage cria na primeira vez e atualiza nas seguintes', () => {
+    const engine = new SearchEngine();
+    const first = engine.upsertPage(page({ title: 'Versão um', url: 'https://x.com/a', keywords: ['antigo'] }));
+    const second = engine.upsertPage(page({ title: 'Versão dois', url: 'https://x.com/a', keywords: ['novo'] }));
+    expect(first.created).toBe(true);
+    expect(second.created).toBe(false);
+    expect(second.page.id).toBe(first.page.id);
+    expect(engine.stats().pageCount).toBe(1);
+    expect(engine.search('antigo').totalHits).toBe(0);
+    expect(engine.search('novo').totalHits).toBe(1);
   });
 });

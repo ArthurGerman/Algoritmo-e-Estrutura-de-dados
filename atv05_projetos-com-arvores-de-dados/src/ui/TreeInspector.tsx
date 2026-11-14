@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { SearchEngine, TreeViewNode } from '../core';
 import { useEngineVersion } from './useEngineVersion';
 
@@ -26,10 +26,11 @@ function NodeView({ node }: { node: TreeViewNode }) {
 }
 
 export function TreeInspector({ engine }: { engine: SearchEngine }) {
-  useEngineVersion(engine);
+  const version = useEngineVersion(engine);
   const [which, setWhich] = useState<Which>('trie');
   const [prefix, setPrefix] = useState('');
-  const stats = engine.stats();
+  // Calcular as estatísticas percorre a Trie: só refaz quando o índice muda, não a cada tecla digitada.
+  const stats = useMemo(() => engine.stats(), [engine, version]);
 
   const view =
     which === 'trie' ? engine.termTreeView({ prefix, maxDepth: 4, maxChildren: 10 }) : engine.documentTreeView(4);

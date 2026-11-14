@@ -5,6 +5,8 @@ import { PageAnalyzer } from './index/PageAnalyzer';
 import { Searcher } from './index/Searcher';
 import { validatePageInput } from './index/validatePageInput';
 import { Tokenizer } from './text/Tokenizer';
+import { Trie } from './tree/Trie';
+import { normalizeUrl } from './url';
 import type { TreeViewNode, TreeViewOptions } from './tree/TreeView';
 import type {
   EngineStats,
@@ -36,6 +38,8 @@ export class SearchEngine {
   private readonly analyzer: PageAnalyzer;
   private readonly index = new InvertedIndex();
   private readonly repository = new DocumentRepository();
+  /** URL normalizada -> id da página. Evita duplicatas e permite achar uma página pela URL em O(m). */
+  private readonly urlIndex = new Trie<number>();
   private readonly searcher: Searcher;
 
   private readonly listeners = new Set<() => void>();
@@ -52,6 +56,9 @@ export class SearchEngine {
 
   addPage(input: PageInput): Page {
     const { clean, termWeights } = this.prepare(input);
+    const urlKey = SearchEngine.urlKey(clean.url);
+    if (this.urlIndex.has(urlKey)) throw duplicateUrlError();
+
     const timestamp = this.now();
     const page: Page = {
       ...clean,
@@ -61,8 +68,19 @@ export class SearchEngine {
     };
     this.index.addDocument(page.id, termWeights);
     this.repository.put({ page, termWeights });
+    this.urlIndex.set(urlKey, page.id);
     this.notify();
     return page;
+  }
+
+  /**
+   * Indexa a página; se já existir uma com a mesma URL, atualiza essa.
+   * É o que o crawler usa, para que coletar de novo não gere duplicatas.
+   */
+  upsertPage(input: PageInput): { page: Page; created: boolean } {
+    const existing = this.findPageByUrl(input.url);
+    if (existing === undefined) return { page: this.addPage(input), created: true };
+    return { page: this.updatePage(existing.id, input), created: false };
   }
 
   /** Edita os campos informados e reindexa a página. */
@@ -76,12 +94,20 @@ export class SearchEngine {
       content: changes.content ?? current.page.content,
       keywords: changes.keywords ?? current.page.keywords,
     });
+    const oldUrlKey = SearchEngine.urlKey(current.page.url);
+    const newUrlKey = SearchEngine.urlKey(clean.url);
+    if (newUrlKey !== oldUrlKey && this.urlIndex.has(newUrlKey)) throw duplicateUrlError();
+
     const page: Page = {
       ...clean,
       id,
       createdAt: current.page.createdAt,
       updatedAt: this.now(),
     };
+    if (newUrlKey !== oldUrlKey) {
+      this.urlIndex.delete(oldUrlKey);
+      this.urlIndex.set(newUrlKey, id);
+    }
     this.index.removeDocument(id, current.termWeights.keys());
     this.index.addDocument(id, termWeights);
     this.repository.put({ page, termWeights });
@@ -95,6 +121,7 @@ export class SearchEngine {
     if (record === undefined) return false;
     this.index.removeDocument(id, record.termWeights.keys());
     this.repository.remove(id);
+    this.urlIndex.delete(SearchEngine.urlKey(record.page.url));
     this.notify();
     return true;
   }
@@ -103,6 +130,12 @@ export class SearchEngine {
 
   getPage(id: number): Page | undefined {
     return this.repository.get(id)?.page;
+  }
+
+  /** Busca uma página pela URL (comparada já normalizada). */
+  findPageByUrl(url: string): Page | undefined {
+    const id = this.urlIndex.get(SearchEngine.urlKey(url.trim()));
+    return id === undefined ? undefined : this.getPage(id);
   }
 
   /** Todas as páginas em ordem crescente de id. */
@@ -155,6 +188,10 @@ export class SearchEngine {
 
   // ------------------------------------------------------------- internos
 
+  private static urlKey(url: string): string {
+    return normalizeUrl(url) ?? url;
+  }
+
   private prepare(input: PageInput): { clean: PageInput; termWeights: Map<string, number> } {
     const clean = validatePageInput(input);
     const termWeights = this.analyzer.analyze(clean);
@@ -170,6 +207,10 @@ export class SearchEngine {
     this.version++;
     this.listeners.forEach((listener) => listener());
   }
+}
+
+function duplicateUrlError(): ValidationError {
+  return new ValidationError('Já existe uma página com esta URL.', 'url');
 }
 
 function stripPrefix(options: TreeViewOptions & { prefix?: string }): TreeViewOptions {

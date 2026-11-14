@@ -69,7 +69,9 @@ export function SearchPanel({ engine }: Props) {
 
       {query.trim() !== '' && (
         <p className="muted">
-          {response.totalHits} resultado(s) em {response.elapsedMs.toFixed(2)} ms
+          {response.totalHits} resultado(s)
+          {response.hits.length < response.totalHits ? `, mostrando os ${response.hits.length} mais relevantes` : ''} em{' '}
+          {response.elapsedMs.toFixed(2)} ms
         </p>
       )}
       <ol className="results">

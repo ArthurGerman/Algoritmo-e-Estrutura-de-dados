@@ -1,0 +1,3 @@
+# Usado pelo site de demonstração (e pelo próprio servidor de desenvolvimento).
+User-agent: *
+Disallow: /demo/privado/

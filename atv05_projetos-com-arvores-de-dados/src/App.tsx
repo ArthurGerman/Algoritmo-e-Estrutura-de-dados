@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { engine } from './app/engine';
+import { CrawlerPanel } from './ui/CrawlerPanel';
 import { PageForm } from './ui/PageForm';
 import { PageList } from './ui/PageList';
 import { SearchPanel } from './ui/SearchPanel';
@@ -15,6 +16,7 @@ export default function App() {
     <main>
       <h1>Buscador Web</h1>
       <SearchPanel engine={engine} />
+      <CrawlerPanel engine={engine} />
       <PageForm
         key={editing?.id ?? 'new'}
         engine={engine}

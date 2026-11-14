@@ -36,6 +36,11 @@ export class TrieNode<V> {
     return this.edges.delete(symbol);
   }
 
+  /** Filhos sem ordem definida (para percursos que não dependem da ordem). */
+  children(): IterableIterator<TrieNode<V>> {
+    return this.edges.values();
+  }
+
   /** Arestas em ordem alfabética (garante percursos determinísticos). */
   sortedEdges(): Array<[string, TrieNode<V>]> {
     return [...this.edges].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));

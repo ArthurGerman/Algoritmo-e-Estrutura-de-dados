@@ -62,3 +62,8 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px
 .tree ul { margin-left: 18px; padding-left: 12px; border-left: 1px solid var(--line); }
 .tree { overflow-x: auto; font-size: 0.92rem; }
 .node.terminal { font-weight: 600; }
+.log { list-style: none; padding: 0; margin: 0; max-height: 220px; overflow-y: auto; font-size: 0.85rem; border-top: 1px solid var(--line); }
+.log li { padding: 3px 0; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
+.log .warn { color: var(--muted); }
+.log .error { color: var(--error); }
+input[type='number'] { width: 9rem; }

@@ -44,7 +44,7 @@ export class Trie<V> implements Iterable<[string, V]> {
       if (frame === undefined) break;
       const [node, depth] = frame;
       if (depth > max) max = depth;
-      for (const [, child] of node.sortedEdges()) stack.push([child, depth + 1]);
+      for (const child of node.children()) stack.push([child, depth + 1]);
     }
     return max;
   }
